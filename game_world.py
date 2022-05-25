@@ -39,7 +39,8 @@ class GameStage:
     @top_stage.setter
     def top_stage(self, stage: GameStage):
         self._top_stage = stage
-        stage.bottom_stage = self
+        if not stage.bottom_stage:
+            stage.bottom_stage = self
 
     @property
     def bottom_stage(self) -> Optional[GameStage]:
@@ -48,7 +49,8 @@ class GameStage:
     @bottom_stage.setter
     def bottom_stage(self, stage: GameStage):
         self._bottom_stage = stage
-        stage.top_stage = self
+        if not stage.top_stage:
+            stage.top_stage = self
 
     @property
     def right_stage(self) -> Optional[GameStage]:
@@ -57,7 +59,8 @@ class GameStage:
     @right_stage.setter
     def right_stage(self, stage: GameStage):
         self._right_stage = stage
-        self.left_stage = self
+        if not stage.left_stage:
+            stage.left_stage = self
 
     @property
     def left_stage(self) -> Optional[GameStage]:
@@ -66,7 +69,8 @@ class GameStage:
     @left_stage.setter
     def left_stage(self, stage: GameStage):
         self._left_stage = stage
-        self.right_stage = self
+        if not stage.right_stage:
+            stage.right_stage = self
 
     def set_font(self) -> pygame.Surface:
         """Sets font and returns a text surface"""
@@ -162,25 +166,33 @@ class MainChar(pygame.sprite.Sprite):
     def walk_down(self) -> None:
         self.rect.y = self.rect.y + self.get_current_speed()
 
-    def solve_for_walking(self, name: str) -> None:
+    def solve_for_walking(self, name: str, game_world: GameWorld) -> None:
         """method to find and execute the right walking method based on input"""
-        if self.wall_collision_check():
+        if self.wall_collision_check(game_world):
             return None
         do = f"walk_{name}"
         if hasattr(self, do) and callable(func := getattr(self, do)):
             func()
 
-    def wall_collision_check(self) -> bool:
+    def wall_collision_check(self, game_world: GameWorld) -> bool:
         """ if next move will hit a wall, return true """
         speed = self.get_current_speed()
 
         if self.rect.bottomright[0] + speed > SCREEN_SIZE[0] and pygame.key.get_pressed()[K_d]:
+            if game_world.current_stage.right_stage:
+                game_world.current_stage = game_world.current_stage.right_stage
             return True
         if self.rect.bottomright[1] + speed > SCREEN_SIZE[1] and pygame.key.get_pressed()[K_s]:
+            if game_world.current_stage.bottom_stage:
+                game_world.current_stage = game_world.current_stage.bottom_stage
             return True
         if self.rect.x - speed < 0 and pygame.key.get_pressed()[K_a]:
+            if game_world.current_stage.left_stage:
+                game_world.current_stage = game_world.current_stage.left_stage
             return True
         if self.rect.y - speed < 0 and pygame.key.get_pressed()[K_w]:
+            if game_world.current_stage.top_stage:
+                game_world.current_stage = game_world.current_stage.top_stage
             return True
         return False
 
@@ -196,7 +208,24 @@ def create_stages() -> List[GameStage]:
     """Creates the stages for the game"""
     main_char_group = create_main_char_group()
     start_stage = GameStage(main_char_group, "Start Level")
-    return [start_stage]
+
+    main_char_group = create_main_char_group()
+    right_stage = GameStage(main_char_group, "Right Level")
+
+    main_char_group = create_main_char_group()
+    top_stage = GameStage(main_char_group, "Top Level")
+
+    main_char_group = create_main_char_group()
+    left_stage = GameStage(main_char_group, "Left Level")
+
+    main_char_group = create_main_char_group()
+    bottom_stage = GameStage(main_char_group, "Bottom Level")
+
+    start_stage.right_stage = right_stage
+    start_stage.top_stage = top_stage
+    start_stage.left_stage = left_stage
+    start_stage.bottom_stage = bottom_stage
+    return [start_stage, right_stage, top_stage, left_stage, bottom_stage]
 
 
 def create_game_world() -> GameWorld:

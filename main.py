@@ -46,7 +46,7 @@ def handle_walking(game_world: GameWorld) -> None:
     else:
         game_world.current_stage.sprite_group.sprite.movement_type = MovementType.WALK
     [
-        game_world.current_stage.sprite_group.sprite.solve_for_walking(MainChar.MAPPED_WALKING[key])
+        game_world.current_stage.sprite_group.sprite.solve_for_walking(MainChar.MAPPED_WALKING[key], game_world)
         for key, key_active in enumerate(pygame.key.get_pressed())
         if key_active and key in MainChar.MAPPED_WALKING
     ]
@@ -93,6 +93,7 @@ def loop(menu: Menu, game_world: GameWorld) -> None:
             menu.current_page.draw_page_name()
         if game.game_state == GameState.GAME:
             game_world.current_stage.sprite_group.draw(GAME_WINDOW)
+            game_world.current_stage.draw_page_name()
 
         # Fenster aktualisieren
         GAME_DISPLAY.flip()
