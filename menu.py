@@ -29,6 +29,8 @@ class MenuPage:
 
     def draw_page_name(self) -> None:
         """Draws the page name on top of the window"""
+        self.font_surface = self.set_font()
+
         GAME_WINDOW.blit(
             self.font_surface,
             [

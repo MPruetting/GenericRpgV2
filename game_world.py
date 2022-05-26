@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pygame
 from pygame.locals import *
@@ -13,7 +13,7 @@ from menu import SCREEN_SIZE, GAME_WINDOW
 # set the walking speed to 30 frames per second (example: base char speed 2 is 60 px moving per second)
 # same with fighting
 GAME_FPS = 60
-WALKING_TARGET_FPS = 30
+WALKING_TARGET_FPS = 45
 GAME_WALKING_FPS_RATIO = GAME_FPS / WALKING_TARGET_FPS
 
 
@@ -25,12 +25,14 @@ class GameStage:
     ):
         self.sprite_group = sprite_group
         self.name = name
-        self.font_surface = self.set_font()
+        self.coordinates = [0, 0]
 
         self._top_stage: Optional[GameStage] = None
         self._bottom_stage: Optional[GameStage] = None
         self._right_stage: Optional[GameStage] = None
         self._left_stage: Optional[GameStage] = None
+
+        self.font_surface = self.set_font()
 
     @property
     def top_stage(self) -> Optional[GameStage]:
@@ -41,6 +43,7 @@ class GameStage:
         self._top_stage = stage
         if not stage.bottom_stage:
             stage.bottom_stage = self
+            stage.coordinates[1] = self._top_stage.coordinates[1] - 1
 
     @property
     def bottom_stage(self) -> Optional[GameStage]:
@@ -51,6 +54,7 @@ class GameStage:
         self._bottom_stage = stage
         if not stage.top_stage:
             stage.top_stage = self
+            stage.coordinates[1] = self._bottom_stage.coordinates[1] + 1
 
     @property
     def right_stage(self) -> Optional[GameStage]:
@@ -61,6 +65,7 @@ class GameStage:
         self._right_stage = stage
         if not stage.left_stage:
             stage.left_stage = self
+            stage.coordinates[0] = self._right_stage.coordinates[0] + 1
 
     @property
     def left_stage(self) -> Optional[GameStage]:
@@ -71,14 +76,18 @@ class GameStage:
         self._left_stage = stage
         if not stage.right_stage:
             stage.right_stage = self
+            stage.coordinates[0] = self._left_stage.coordinates[0] - 1
 
     def set_font(self) -> pygame.Surface:
         """Sets font and returns a text surface"""
         font = pygame.font.SysFont("Arial", 40)
-        return font.render(self.name, True, pygame.color.Color("blue"))
+        text = self.name + " Koordinaten: " + str(self.coordinates[0]) + ", " + str(self.coordinates[1])
+        return font.render(text, True, pygame.color.Color("blue"))
 
     def draw_page_name(self) -> None:
         """Draws the page name on top of the window"""
+        self.font_surface = self.set_font()
+
         GAME_WINDOW.blit(
             self.font_surface,
             [
@@ -89,7 +98,7 @@ class GameStage:
 
 
 class GameWorld:
-    def __init__(self, stages: List[GameStage]):
+    def __init__(self, stages: Tuple[GameStage, ...]):
         self.stages = stages
         self.current_stage = self.stages[0]
 
@@ -181,18 +190,22 @@ class MainChar(pygame.sprite.Sprite):
         if self.rect.bottomright[0] + speed > SCREEN_SIZE[0] and pygame.key.get_pressed()[K_d]:
             if game_world.current_stage.right_stage:
                 game_world.current_stage = game_world.current_stage.right_stage
+                self.rect.x = 0
             return True
         if self.rect.bottomright[1] + speed > SCREEN_SIZE[1] and pygame.key.get_pressed()[K_s]:
             if game_world.current_stage.bottom_stage:
                 game_world.current_stage = game_world.current_stage.bottom_stage
+                self.rect.y = 0
             return True
         if self.rect.x - speed < 0 and pygame.key.get_pressed()[K_a]:
             if game_world.current_stage.left_stage:
                 game_world.current_stage = game_world.current_stage.left_stage
+                self.rect.x = SCREEN_SIZE[0] - self.rect.width
             return True
         if self.rect.y - speed < 0 and pygame.key.get_pressed()[K_w]:
             if game_world.current_stage.top_stage:
                 game_world.current_stage = game_world.current_stage.top_stage
+                self.rect.y = SCREEN_SIZE[1] - self.rect.height
             return True
         return False
 
@@ -204,28 +217,22 @@ class MainCharGroup(pygame.sprite.GroupSingle):
         return [self.sprite]
 
 
-def create_stages() -> List[GameStage]:
+def create_stages() -> Tuple[GameStage, ...]:
     """Creates the stages for the game"""
     main_char_group = create_main_char_group()
+
     start_stage = GameStage(main_char_group, "Start Level")
-
-    main_char_group = create_main_char_group()
     right_stage = GameStage(main_char_group, "Right Level")
-
-    main_char_group = create_main_char_group()
     top_stage = GameStage(main_char_group, "Top Level")
-
-    main_char_group = create_main_char_group()
     left_stage = GameStage(main_char_group, "Left Level")
-
-    main_char_group = create_main_char_group()
     bottom_stage = GameStage(main_char_group, "Bottom Level")
 
     start_stage.right_stage = right_stage
     start_stage.top_stage = top_stage
     start_stage.left_stage = left_stage
     start_stage.bottom_stage = bottom_stage
-    return [start_stage, right_stage, top_stage, left_stage, bottom_stage]
+
+    return start_stage, right_stage, top_stage, left_stage, bottom_stage
 
 
 def create_game_world() -> GameWorld:
