@@ -3,13 +3,14 @@ from enum import Enum, auto
 import pygame
 from pygame.locals import *
 
-from game_world import MainChar, MovementType, create_game_world, GameWorld
+from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map
 from menu import Menu, create_menu, GAME_WINDOW, GAME_DISPLAY
 
 
 class GameState(Enum):
     MENU = auto()
     GAME = auto()
+    MAP = auto()
 
 
 class Game:
@@ -17,11 +18,11 @@ class Game:
         self.game_state = game_state
 
 
-def toggle_game_state(game: Game) -> None:
-    if game.game_state == game.game_state.MENU:
+def set_game_state(game: Game, new_state: GameState) -> None:
+    if game.game_state == new_state:
         game.game_state = GameState.GAME
     else:
-        game.game_state = GameState.MENU
+        game.game_state = new_state
 
 
 def handle_game_close_events(event) -> bool:
@@ -33,11 +34,17 @@ def handle_game_close_events(event) -> bool:
 
 def handle_pause_event(event, game: Game) -> None:
     if event.type == KEYDOWN and event.key == K_p:
-        toggle_game_state(game)
+        set_game_state(game, GameState.MENU)
 
 
-def handle_keyboard_events(game_world: GameWorld) -> None:
-    handle_walking(game_world)
+def handle_map_event(event, game: Game) -> None:
+    if event.type == KEYDOWN and event.key == K_m:
+        set_game_state(game, GameState.MAP)
+
+
+def handle_keyboard_events(game_world: GameWorld, game: Game) -> None:
+    if game.game_state == GameState.GAME:
+        handle_walking(game_world)
 
 
 def handle_walking(game_world: GameWorld) -> None:
@@ -63,15 +70,29 @@ def check_user_action(menu: Menu, game_world: GameWorld, game: Game) -> bool:
     """Check User Action. return false on quit events from user"""
     for event in pygame.event.get():
         handle_pause_event(event, game)
+        handle_map_event(event, game)
         if not handle_game_close_events(event):
             return False
         handle_mouse_events(event, menu)
-    handle_keyboard_events(game_world)
+    handle_keyboard_events(game_world, game)
 
     return True
 
 
-def loop(menu: Menu, game_world: GameWorld) -> None:
+def draw_sprites(menu: Menu, game_world: GameWorld, game_map: Map, game: Game) -> None:
+    """Draws the sprites for the game, map, pause menu, etc"""
+    if game.game_state == GameState.MENU:
+        menu.current_page.button_group.draw(GAME_WINDOW)
+        menu.current_page.button_group.update(surface=GAME_WINDOW)
+        menu.current_page.draw_page_name()
+    if game.game_state == GameState.GAME:
+        game_world.current_stage.sprite_group.draw(GAME_WINDOW)
+        game_world.current_stage.draw_page_name()
+    if game.game_state == GameState.MAP:
+        game_map.draw_map()
+
+
+def loop(menu: Menu, game_world: GameWorld, game_map: Map) -> None:
     """Running the pygame loop. set different stuff for window each loop"""
     game = Game()
 
@@ -87,13 +108,7 @@ def loop(menu: Menu, game_world: GameWorld) -> None:
         GAME_WINDOW.fill(pygame.color.Color("grey"))
 
         # Spielfeld/figuren zeichnen
-        if game.game_state == GameState.MENU:
-            menu.current_page.button_group.draw(GAME_WINDOW)
-            menu.current_page.button_group.update(surface=GAME_WINDOW)
-            menu.current_page.draw_page_name()
-        if game.game_state == GameState.GAME:
-            game_world.current_stage.sprite_group.draw(GAME_WINDOW)
-            game_world.current_stage.draw_page_name()
+        draw_sprites(menu, game_world, game_map, game)
 
         # Fenster aktualisieren
         GAME_DISPLAY.flip()
@@ -107,8 +122,9 @@ def main() -> None:
 
     menu = create_menu()
     game_world = create_game_world()
+    game_map = create_map(game_world)
 
-    loop(menu, game_world)
+    loop(menu, game_world, game_map)
 
 
 if __name__ == '__main__':

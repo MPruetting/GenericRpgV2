@@ -103,6 +103,36 @@ class GameWorld:
         self.current_stage = self.stages[0]
 
 
+class Map:
+    CELL_WIDTH = 40
+    CELL_HEIGHT = 40
+    CELL_BORDER_COLOR = pygame.color.Color("black")
+    CELL_BORDER_COLOR_HIGHLIGHT = pygame.color.Color("red")
+    START_POSITION = [SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2]
+
+    def __init__(self, game_world: GameWorld):
+        self.game_world = game_world
+
+    def draw_map(self):
+        """draws the map from the game world stages"""
+        for stage in self.game_world.stages:
+            color = self.CELL_BORDER_COLOR
+            if self.game_world.current_stage == stage:
+                color = self.CELL_BORDER_COLOR_HIGHLIGHT
+            cell_rect = pygame.Rect(
+                self.START_POSITION[0] + stage.coordinates[0] * self.CELL_WIDTH,
+                self.START_POSITION[1] + stage.coordinates[1] * self.CELL_HEIGHT,
+                self.CELL_WIDTH,
+                self.CELL_HEIGHT
+            )
+            pygame.draw.rect(
+                GAME_WINDOW,
+                color,
+                cell_rect,
+                1
+            )
+
+
 class MovementType(Enum):
     WALK = 0
     SPRINT = 1
@@ -238,6 +268,10 @@ def create_stages() -> Tuple[GameStage, ...]:
 def create_game_world() -> GameWorld:
     stages = create_stages()
     return GameWorld(stages)
+
+
+def create_map(game_world: GameWorld) -> Map:
+    return Map(game_world)
 
 
 def create_main_char() -> MainChar:
