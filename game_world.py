@@ -108,7 +108,7 @@ class Map:
     CELL_HEIGHT = 40
     CELL_BORDER_COLOR = pygame.color.Color("black")
     CELL_BORDER_COLOR_HIGHLIGHT = pygame.color.Color("red")
-    START_POSITION = [SCREEN_SIZE[0] / 2, SCREEN_SIZE[1] / 2]
+    START_POSITION = [SCREEN_SIZE[0] / 2 - CELL_WIDTH / 2, SCREEN_SIZE[1] / 2 - CELL_HEIGHT / 2]
 
     def __init__(self, game_world: GameWorld):
         self.game_world = game_world

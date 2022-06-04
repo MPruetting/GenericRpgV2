@@ -3,7 +3,7 @@ from typing import Dict, Callable
 
 import pygame
 
-from mixer import load_menu_background_music, add_music_volume, sub_music_volume
+from mixer import load_menu_background_music, add_music_volume, sub_music_volume, play_sound, BASS_HIT
 
 pygame.font.init()
 SCREEN_SIZE = [1300, 900]
@@ -15,10 +15,12 @@ GAME_WINDOW = GAME_DISPLAY.set_mode(SCREEN_SIZE)
 class MenuPage:
     def __init__(
             self,
-            button_group: pygame.sprite.Group = None,
+            button_group: pygame.sprite.Group,
+            sprite_group: pygame.sprite.Group,
             name: str = "Seite"
     ):
         self.button_group = button_group
+        self.sprite_group = sprite_group
         self.name = name
         self.font_surface = self.set_font()
 
@@ -55,7 +57,8 @@ class MenuButton(ABC, pygame.sprite.Sprite):
     BUTTON_SIZE = [200, 80]
 
     # COLORS
-    MENU_BUTTON_COLOR = "darkgreen"
+    MENU_BUTTON_COLOR = "palegreen4"
+    MENU_BUTTON_FOCUS_COLOR = "palegreen3"
 
     # pages
     SWITCH_CURRENT_PAGE = None
@@ -65,17 +68,39 @@ class MenuButton(ABC, pygame.sprite.Sprite):
         # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
 
+        self._focus = False  # when mouse click down holding
+        self.text = text
+        self.font_surface = self.set_font(text)
+        self.pos = pos
+        self.pos_x = pos[0]
+        self.pos_y = pos[1]
         if size is None:
             size = self.BUTTON_SIZE
-        text_surface = self.set_font(text)
+        self.size = size
+        self.width = size[0]
+        self.height = size[1]
+        self.color = color
 
         # Create an image of the block, and fill it with a color.
         # This could also be an image loaded from the disk.
-        self.set_image(text_surface, size[0], size[1], color)
+        self.set_image()
 
         # Fetch the rectangle object that has the dimensions of the image
         # Update the position of this object by setting the values of rect.x and rect.y
-        self.set_rect(pos[0], pos[1])
+        self.set_rect()
+
+    @property
+    def focus(self) -> bool:
+        return self._focus
+
+    @focus.setter
+    def focus(self, focus: bool):
+        self._focus = focus
+        if focus:
+            self.image.fill(self.MENU_BUTTON_FOCUS_COLOR)
+        else:
+            self.image.fill(self.MENU_BUTTON_COLOR)
+        self.draw_text()
 
     def set_font(self, text) -> pygame.Surface:
         """Sets font and returns a text surface"""
@@ -83,25 +108,28 @@ class MenuButton(ABC, pygame.sprite.Sprite):
         font = pygame.font.SysFont("Arial", 24)
         return font.render(text, True, self.TEXT_COLOR)
 
-    def set_image(self, text_surface, width, height, color) -> None:
+    def set_image(self) -> None:
         """Create an button image and blit text over it"""
 
-        self.image = pygame.Surface([width, height])
-        self.image.fill(color)
+        self.image = pygame.Surface([self.width, self.height])
+        self.image.fill(self.color)
+        self.draw_text()
+
+    def draw_text(self) -> None:
         self.image.blit(
-            text_surface,
+            self.font_surface,
             [
-                width / 2 - text_surface.get_width() / 2,
-                height / 2 - text_surface.get_height() / 2
+                self.width / 2 - self.font_surface.get_width() / 2,
+                self.height / 2 - self.font_surface.get_height() / 2
             ]
         )
 
-    def set_rect(self, pos_x: int, pos_y: int) -> None:
+    def set_rect(self) -> None:
         """Sets the rect and position of an image"""
 
         self.rect = self.image.get_rect()
-        self.rect.x = pos_x
-        self.rect.y = pos_y
+        self.rect.x = self.pos_x
+        self.rect.y = self.pos_y
 
     @abstractmethod
     def on_click(self, *args, **kwargs):
@@ -200,6 +228,7 @@ class ActionButton(MenuButton):
         self.action = action
 
     def on_click(self, *args, **kwargs):
+        # play_sound(BASS_HIT)
         self.action()
 
     @staticmethod
@@ -221,13 +250,17 @@ class SwitchButton(MenuButton):
 def create_menu_pages() -> Dict[str, MenuPage]:
     menu_page1_sprite_group = pygame.sprite.Group()
     menu_page1_sprite_group.add(
+        SoundProgressBar([SCREEN_SIZE[0] / 2 - ActionButton.BUTTON_SIZE[0] / 2, 300])
+
+    )
+    menu_page1_button_group = pygame.sprite.Group()
+    menu_page1_button_group.add(
         ActionButton(
             [SCREEN_SIZE[0] / 2 - ActionButton.BUTTON_SIZE[0] / 2, 200],
             add_music_volume,
             MenuButton.BUTTON_SIZE,
             "+"
         ),
-        SoundProgressBar([SCREEN_SIZE[0] / 2 - ActionButton.BUTTON_SIZE[0] / 2, 300]),
         ActionButton(
             [SCREEN_SIZE[0] / 2 - ActionButton.BUTTON_SIZE[0] / 2, 400],
             sub_music_volume,
@@ -236,12 +269,13 @@ def create_menu_pages() -> Dict[str, MenuPage]:
         )
     )
     menu_page1 = MenuPage(
-        menu_page1_sprite_group,
+        sprite_group=menu_page1_sprite_group,
+        button_group=menu_page1_button_group,
         name="Seite1"
     )
 
-    menu_page2_sprite_group = pygame.sprite.Group()
-    menu_page2_sprite_group.add(
+    menu_page2_button_group = pygame.sprite.Group()
+    menu_page2_button_group.add(
         ActionButton(
             [SCREEN_SIZE[0] / 2 - ActionButton.BUTTON_SIZE[0] / 2, 200],
             ActionButton.no_action,
@@ -250,7 +284,8 @@ def create_menu_pages() -> Dict[str, MenuPage]:
         )
     )
     menu_page2 = MenuPage(
-        menu_page2_sprite_group,
+        button_group=menu_page2_button_group,
+        sprite_group=pygame.sprite.Group(),
         name="Seite2"
     )
 

@@ -61,9 +61,14 @@ def handle_walking(game_world: GameWorld) -> None:
 
 def handle_mouse_events(event, menu: Menu) -> None:
     if event.type == MOUSEBUTTONDOWN:
-        for sprite in menu.current_page.button_group:
-            if sprite.rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
-                sprite.on_click(menu)
+        for button in menu.current_page.button_group:
+            if button.rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]):
+                button.focus = True
+    if event.type == MOUSEBUTTONUP:
+        for button in menu.current_page.button_group:
+            if button.rect.collidepoint(pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1]) and button.focus:
+                button.on_click(menu)
+            button.focus = False
 
 
 def check_user_action(menu: Menu, game_world: GameWorld, game: Game) -> bool:
@@ -83,7 +88,8 @@ def draw_sprites(menu: Menu, game_world: GameWorld, game_map: Map, game: Game) -
     """Draws the sprites for the game, map, pause menu, etc"""
     if game.game_state == GameState.MENU:
         menu.current_page.button_group.draw(GAME_WINDOW)
-        menu.current_page.button_group.update(surface=GAME_WINDOW)
+        menu.current_page.sprite_group.draw(GAME_WINDOW)
+        menu.current_page.sprite_group.update(surface=GAME_WINDOW)
         menu.current_page.draw_page_name()
     if game.game_state == GameState.GAME:
         game_world.current_stage.sprite_group.draw(GAME_WINDOW)
