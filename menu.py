@@ -3,13 +3,14 @@ from typing import Dict, Callable
 
 import pygame
 
-from mixer import load_menu_background_music, add_music_volume, sub_music_volume, play_sound, BASS_HIT
+from mixer import load_menu_background_music, add_music_volume, sub_music_volume, play_menu_button_action_sound
 
 pygame.font.init()
 SCREEN_SIZE = [1300, 900]
 GAME_DISPLAY = pygame.display
 GAME_DISPLAY.set_caption("GenericRpgV2")
 GAME_WINDOW = GAME_DISPLAY.set_mode(SCREEN_SIZE)
+GAME_CLOCK = pygame.time.Clock()
 
 
 class MenuPage:
@@ -228,7 +229,7 @@ class ActionButton(MenuButton):
         self.action = action
 
     def on_click(self, *args, **kwargs):
-        # play_sound(BASS_HIT)
+        play_menu_button_action_sound()
         self.action()
 
     @staticmethod

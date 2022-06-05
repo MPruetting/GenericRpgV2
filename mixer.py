@@ -3,12 +3,17 @@ from pathlib import Path
 import pygame
 
 
+pygame.mixer.init()
+
 # PATHS
 MUSIC_PATH = Path.cwd() / 'resources' / 'music'
 SOUND_PATH = Path.cwd() / 'resources' / 'sound'
 
-# SOUND
-BASS_HIT = "bass-hit-rhythm.mp3"
+# SOUND_FILES
+BASS_HIT = "bass-hit-rhythm.ogg"
+
+# PYGAME SOUNDS
+BASS_HIT_SOUND = pygame.mixer.Sound(SOUND_PATH / BASS_HIT)
 
 
 def load_menu_background_music() -> None:
@@ -30,8 +35,7 @@ def sub_music_volume() -> None:
     pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.1)
 
 
-def play_sound(sound_file: str) -> None:
-    print(SOUND_PATH / sound_file)
-    sound = pygame.mixer.Sound(SOUND_PATH / sound_file)
-    sound.set_volume(0.1)
-    sound.play()
+def play_menu_button_action_sound() -> None:
+    BASS_HIT_SOUND.set_volume(0.7)
+    BASS_HIT_SOUND.play(maxtime=250)
+    BASS_HIT_SOUND.fadeout(200)

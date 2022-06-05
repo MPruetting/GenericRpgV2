@@ -3,8 +3,9 @@ from enum import Enum, auto
 import pygame
 from pygame.locals import *
 
+from debug import Debug
 from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map
-from menu import Menu, create_menu, GAME_WINDOW, GAME_DISPLAY
+from menu import Menu, create_menu, GAME_WINDOW, GAME_DISPLAY, GAME_CLOCK
 
 
 class GameState(Enum):
@@ -98,7 +99,7 @@ def draw_sprites(menu: Menu, game_world: GameWorld, game_map: Map, game: Game) -
         game_map.draw_map()
 
 
-def loop(menu: Menu, game_world: GameWorld, game_map: Map) -> None:
+def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None:
     """Running the pygame loop. set different stuff for window each loop"""
     game = Game()
 
@@ -115,22 +116,22 @@ def loop(menu: Menu, game_world: GameWorld, game_map: Map) -> None:
 
         # Spielfeld/figuren zeichnen
         draw_sprites(menu, game_world, game_map, game)
+        debug.display_debug_output()
 
         # Fenster aktualisieren
         GAME_DISPLAY.flip()
-        clock = pygame.time.Clock()
-        clock.tick(60)
+        GAME_CLOCK.tick(60)
 
 
 def main() -> None:
     pygame.init()
-    pygame.mixer.init()
 
     menu = create_menu()
     game_world = create_game_world()
     game_map = create_map(game_world)
+    debug = Debug(screen=GAME_WINDOW)
 
-    loop(menu, game_world, game_map)
+    loop(menu, game_world, game_map, debug)
 
 
 if __name__ == '__main__':
