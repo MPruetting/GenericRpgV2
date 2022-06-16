@@ -24,18 +24,23 @@ def load_menu_background_music() -> None:
 
 
 def set_initial_music_volume() -> None:
-    pygame.mixer.music.set_volume(0.10)
+    pygame.mixer.music.set_volume(0.1)
 
 
 def add_music_volume() -> None:
-    pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.1)
+    if pygame.mixer.music.get_volume() + 0.1 > 1:
+        pygame.mixer.music.set_volume(1)
+    else:
+        pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.1)
 
 
 def sub_music_volume() -> None:
-    pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.1)
+    if pygame.mixer.music.get_volume() - 0.1 < 0:
+        pygame.mixer.music.set_volume(0)
+    else:
+        pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.1)
 
 
 def play_menu_button_action_sound() -> None:
-    BASS_HIT_SOUND.set_volume(0.7)
     BASS_HIT_SOUND.play(maxtime=250)
     BASS_HIT_SOUND.fadeout(200)

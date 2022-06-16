@@ -218,7 +218,7 @@ class SoundProgressBar(ProgressBar):
 
     def calculate_inner_bar_percent(self) -> int:
         """A function that calculates the progress width"""
-        bar_width_percent = int(pygame.mixer.music.get_volume() * 100)
+        bar_width_percent = int(round(pygame.mixer.music.get_volume(), 1) * 100)
         return bar_width_percent
 
 
