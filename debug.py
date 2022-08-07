@@ -1,4 +1,5 @@
 import pygame
+from typing import List
 
 from menu import GAME_CLOCK
 
@@ -64,13 +65,17 @@ class Debug:
         """
         self.draw.draw_font("Test", 30, pos)
 
-    def display_debug_output(self):
+    def display_debug_output(self, custom_text_list: List[dict]):
         """ Gibt Debug ausgaben über pygame aus"""
+        if custom_text_list is None:
+            custom_text_list = []
         text_rows = [
             f"FPS: {GAME_CLOCK.get_fps()}",
             f"Fenstergroese: {self.screen.get_size()}",
             f"Mausposition: {pygame.mouse.get_pos()}",
         ]
+        for text in custom_text_list:
+            text_rows.append(f"{text['name']}: {text['text']}")
         height_pos = self.FONT_SIZE
         for row in text_rows:
             self.draw.draw_font(row, self.FONT_SIZE, [20, height_pos])

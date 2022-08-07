@@ -17,6 +17,24 @@ class GameState(Enum):
 class Game:
     def __init__(self, game_state: GameState = GameState.GAME):
         self.game_state = game_state
+        self.game_state_events = {
+            GameState.GAME: [
+                handle_pause_event,
+                handle_map_event
+            ],
+            GameState.MAP: [
+                handle_pause_event,
+                handle_map_event
+            ],
+            GameState.MENU: [
+                menu_click_events,
+                handle_pause_event
+            ]
+        }
+
+
+def menu_click_events(event, game: Game, menu: Menu):
+    handle_mouse_events(event, menu)
 
 
 def set_game_state(game: Game, new_state: GameState) -> None:
@@ -33,12 +51,12 @@ def handle_game_close_events(event) -> bool:
     return True
 
 
-def handle_pause_event(event, game: Game) -> None:
+def handle_pause_event(event, game: Game, menu: Menu) -> None:
     if event.type == KEYDOWN and event.key == K_p:
         set_game_state(game, GameState.MENU)
 
 
-def handle_map_event(event, game: Game) -> None:
+def handle_map_event(event, game: Game, menu: Menu) -> None:
     if event.type == KEYDOWN and event.key == K_m:
         set_game_state(game, GameState.MAP)
 
@@ -75,13 +93,11 @@ def handle_mouse_events(event, menu: Menu) -> None:
 def check_user_action(menu: Menu, game_world: GameWorld, game: Game) -> bool:
     """Check User Action. return false on quit events from user"""
     for event in pygame.event.get():
-        handle_pause_event(event, game)
-        handle_map_event(event, game)
+        for event_function in game.game_state_events[game.game_state]:
+            event_function(event, game, menu)
         if not handle_game_close_events(event):
             return False
-        handle_mouse_events(event, menu)
     handle_keyboard_events(game_world, game)
-
     return True
 
 
@@ -116,7 +132,7 @@ def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None
 
         # Spielfeld/figuren zeichnen
         draw_sprites(menu, game_world, game_map, game)
-        debug.display_debug_output()
+        debug.display_debug_output([{"name": "Game State", "text": game.game_state}])
 
         # Fenster aktualisieren
         GAME_DISPLAY.flip()
