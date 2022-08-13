@@ -4,7 +4,7 @@ import pygame
 from pygame.locals import *
 
 from debug import Debug
-from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map
+from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map, load_data
 from menu import Menu, create_menu, GAME_WINDOW, GAME_DISPLAY, GAME_CLOCK
 
 
@@ -31,6 +31,7 @@ class Game:
                 handle_pause_event
             ]
         }
+        self.data = load_data()
 
 
 def menu_click_events(event, game: Game, menu: Menu):
@@ -118,6 +119,8 @@ def draw_sprites(menu: Menu, game_world: GameWorld, game_map: Map, game: Game) -
 def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None:
     """Running the pygame loop. set different stuff for window each loop"""
     game = Game()
+    mainchar = game_world.current_stage.sprite_group.sprite
+    mainchar.data = game.data.mainchar
 
     while True:
         # Überprüfen, ob Nutzer eine Aktion durchgeführt hat
@@ -132,7 +135,12 @@ def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None
 
         # Spielfeld/figuren zeichnen
         draw_sprites(menu, game_world, game_map, game)
-        debug.display_debug_output([{"name": "Game State", "text": game.game_state}])
+        debug.display_debug_output(
+            [
+                {"name": "Game State", "text": game.game_state},
+                {"name": "Main Char Stats", "text": mainchar.data}
+            ]
+        )
 
         # Fenster aktualisieren
         GAME_DISPLAY.flip()

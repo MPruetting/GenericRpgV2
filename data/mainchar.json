@@ -1,0 +1,13 @@
+[
+  {
+    "id": 1,
+    "hp": 20,
+    "current_item": 2,
+    "name": "MainChar",
+    "items": [
+      1,
+      2,
+      4
+    ]
+  }
+]

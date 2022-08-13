@@ -12,6 +12,8 @@ from menu import SCREEN_SIZE, GAME_WINDOW
 # GAME
 # set the walking speed to 30 frames per second (example: base char speed 2 is 60 px moving per second)
 # same with fighting
+from models import MainCharModel, DataModel
+
 GAME_FPS = 60
 WALKING_TARGET_FPS = 45
 GAME_WALKING_FPS_RATIO = GAME_FPS / WALKING_TARGET_FPS
@@ -184,6 +186,7 @@ class MainChar(pygame.sprite.Sprite):
 
         self.walk_direction = WalkDirection.NONE
         self.movement_type = MovementType.WALK
+        self.data: MainCharModel
 
     def get_current_speed(self) -> float:
         """ gets the current movement speed of the character"""
@@ -285,3 +288,9 @@ def create_main_char_group() -> MainCharGroup:
     group = MainCharGroup(char)
 
     return group
+
+
+def load_data() -> DataModel:
+    data_model = DataModel()
+
+    return data_model

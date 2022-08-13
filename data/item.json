@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "name": "sword",
+    "damage": 3
+  },
+  {
+    "id": 2,
+    "name": "axe",
+    "damage": 4
+  },
+  {
+    "id": 3,
+    "name": "mega sword",
+    "damage": 6
+  },
+  {
+    "id": 4,
+    "name": "super sword",
+    "damage": 8
+  },
+  {
+    "id": 5,
+    "name": "ultimate sword",
+    "damage": 10
+  }
+]
