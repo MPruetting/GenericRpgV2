@@ -54,7 +54,6 @@ class DataModel:
     }
 
     def __init__(self):
-        self.data_json_paths = self.PATHS
         self.items = self.load_items()
         self.mainchar = self.load_mainchar()
 

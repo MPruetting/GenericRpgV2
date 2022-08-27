@@ -1,10 +1,12 @@
 from enum import Enum, auto
+from typing import NamedTuple
 
 import pygame
 from pygame.locals import *
 
 from debug import Debug
-from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map, load_data
+from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map, \
+    create_inventory, Inventory
 from menu import Menu, create_menu, GAME_WINDOW, GAME_DISPLAY, GAME_CLOCK
 
 
@@ -12,6 +14,7 @@ class GameState(Enum):
     MENU = auto()
     GAME = auto()
     MAP = auto()
+    Inventory = auto()
 
 
 class Game:
@@ -20,18 +23,33 @@ class Game:
         self.game_state_events = {
             GameState.GAME: [
                 handle_pause_event,
-                handle_map_event
+                handle_map_event,
+                handle_inventory_event
             ],
             GameState.MAP: [
                 handle_pause_event,
-                handle_map_event
+                handle_map_event,
+                handle_inventory_event
             ],
             GameState.MENU: [
                 menu_click_events,
                 handle_pause_event
-            ]
+            ],
+            GameState.Inventory: [
+                handle_pause_event,
+                handle_map_event,
+                handle_inventory_event
+            ],
         }
-        self.data = load_data()
+
+
+class GameComponents(NamedTuple):
+    game: Game
+    game_world: GameWorld
+    map: Map
+    menu: Menu
+    debug: Debug
+    inventory: Inventory
 
 
 def menu_click_events(event, game: Game, menu: Menu):
@@ -62,18 +80,24 @@ def handle_map_event(event, game: Game, menu: Menu) -> None:
         set_game_state(game, GameState.MAP)
 
 
+def handle_inventory_event(event, game: Game, menu: Menu) -> None:
+    if event.type == KEYDOWN and event.key == K_i:
+        set_game_state(game, GameState.Inventory)
+
+
 def handle_keyboard_events(game_world: GameWorld, game: Game) -> None:
     if game.game_state == GameState.GAME:
         handle_walking(game_world)
 
 
 def handle_walking(game_world: GameWorld) -> None:
+    main_sprite = game_world.current_stage.sprite_group.sprite
     if pygame.key.get_pressed()[K_LSHIFT]:
-        game_world.current_stage.sprite_group.sprite.movement_type = MovementType.SPRINT
+        main_sprite.movement_type = MovementType.SPRINT
     else:
-        game_world.current_stage.sprite_group.sprite.movement_type = MovementType.WALK
+        main_sprite.movement_type = MovementType.WALK
     [
-        game_world.current_stage.sprite_group.sprite.solve_for_walking(MainChar.MAPPED_WALKING[key], game_world)
+        main_sprite.solve_for_walking(MainChar.MAPPED_WALKING[key], game_world)
         for key, key_active in enumerate(pygame.key.get_pressed())
         if key_active and key in MainChar.MAPPED_WALKING
     ]
@@ -91,40 +115,41 @@ def handle_mouse_events(event, menu: Menu) -> None:
             button.focus = False
 
 
-def check_user_action(menu: Menu, game_world: GameWorld, game: Game) -> bool:
+def check_user_action(game_components: GameComponents) -> bool:
     """Check User Action. return false on quit events from user"""
     for event in pygame.event.get():
-        for event_function in game.game_state_events[game.game_state]:
-            event_function(event, game, menu)
+        for event_function in game_components.game.game_state_events[game_components.game.game_state]:
+            event_function(event, game_components.game, game_components.menu)
         if not handle_game_close_events(event):
             return False
-    handle_keyboard_events(game_world, game)
+    handle_keyboard_events(game_components.game_world, game_components.game)
     return True
 
 
-def draw_sprites(menu: Menu, game_world: GameWorld, game_map: Map, game: Game) -> None:
+def draw_sprites(game_components: GameComponents) -> None:
     """Draws the sprites for the game, map, pause menu, etc"""
-    if game.game_state == GameState.MENU:
-        menu.current_page.button_group.draw(GAME_WINDOW)
-        menu.current_page.sprite_group.draw(GAME_WINDOW)
-        menu.current_page.sprite_group.update(surface=GAME_WINDOW)
-        menu.current_page.draw_page_name()
-    if game.game_state == GameState.GAME:
-        game_world.current_stage.sprite_group.draw(GAME_WINDOW)
-        game_world.current_stage.draw_page_name()
-    if game.game_state == GameState.MAP:
-        game_map.draw_map()
+    if game_components.game.game_state == GameState.MENU:
+        game_components.menu.current_page.button_group.draw(GAME_WINDOW)
+        game_components.menu.current_page.sprite_group.draw(GAME_WINDOW)
+        game_components.menu.current_page.sprite_group.update(surface=GAME_WINDOW)
+        game_components.menu.current_page.draw_page_name()
+
+    if game_components.game.game_state == GameState.GAME:
+        game_components.game_world.current_stage.sprite_group.draw(GAME_WINDOW)
+        game_components.game_world.current_stage.draw_page_name()
+
+    if game_components.game.game_state == GameState.MAP:
+        game_components.map.draw_map()
+
+    if game_components.game.game_state == GameState.Inventory:
+        game_components.inventory.draw_page()
 
 
-def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None:
+def loop(game_components: GameComponents) -> None:
     """Running the pygame loop. set different stuff for window each loop"""
-    game = Game()
-    mainchar = game_world.current_stage.sprite_group.sprite
-    mainchar.data = game.data.mainchar
-
     while True:
         # Überprüfen, ob Nutzer eine Aktion durchgeführt hat
-        if not check_user_action(menu, game_world, game):
+        if not check_user_action(game_components):
             pygame.quit()
             break
 
@@ -134,13 +159,13 @@ def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None
         GAME_WINDOW.fill(pygame.color.Color("grey"))
 
         # Spielfeld/figuren zeichnen
-        draw_sprites(menu, game_world, game_map, game)
-        debug.display_debug_output(
-            [
-                {"name": "Game State", "text": game.game_state},
-                {"name": "Main Char Stats", "text": mainchar.data}
-            ]
-        )
+        draw_sprites(game_components)
+        # game_components.debug.display_debug_output(
+        #     [
+        #         {"name": "Game State", "text": game_components.game.game_state},
+        #         {"name": "Main Char Stats", "text": mainchar.data}
+        #     ]
+        # )
 
         # Fenster aktualisieren
         GAME_DISPLAY.flip()
@@ -150,12 +175,19 @@ def loop(menu: Menu, game_world: GameWorld, game_map: Map, debug: Debug) -> None
 def main() -> None:
     pygame.init()
 
-    menu = create_menu()
     game_world = create_game_world()
     game_map = create_map(game_world)
-    debug = Debug(screen=GAME_WINDOW)
+    inventory = create_inventory(game_world.current_stage.sprite_group)
 
-    loop(menu, game_world, game_map, debug)
+    game_components = GameComponents(
+        Game(),
+        game_world,
+        game_map,
+        create_menu(),
+        Debug(screen=GAME_WINDOW),
+        inventory
+    )
+    loop(game_components)
 
 
 if __name__ == '__main__':
