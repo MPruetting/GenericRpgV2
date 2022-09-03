@@ -5,8 +5,8 @@ import pygame
 from pygame.locals import *
 
 from debug import Debug
-from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map, \
-    create_inventory, Inventory
+from game_world import MainChar, MovementType, create_game_world, GameWorld, create_map, Map
+from inventory import Inventory, create_inventory
 from menu import Menu, create_menu, GAME_WINDOW, GAME_DISPLAY, GAME_CLOCK
 
 
@@ -142,7 +142,9 @@ def draw_sprites(game_components: GameComponents) -> None:
         game_components.map.draw_map()
 
     if game_components.game.game_state == GameState.Inventory:
-        game_components.inventory.draw_page()
+        game_components.inventory.current_item_fonts.draw(GAME_WINDOW)
+        game_components.inventory.all_item_fonts.draw(GAME_WINDOW)
+        game_components.inventory.draw_page_name()
 
 
 def loop(game_components: GameComponents) -> None:
@@ -177,7 +179,7 @@ def main() -> None:
 
     game_world = create_game_world()
     game_map = create_map(game_world)
-    inventory = create_inventory(game_world.current_stage.sprite_group)
+    inventory = create_inventory(game_world.current_stage.sprite_group.sprite.data)
 
     game_components = GameComponents(
         Game(),

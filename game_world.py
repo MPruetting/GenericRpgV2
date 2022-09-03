@@ -8,10 +8,6 @@ import pygame
 from pygame.locals import *
 
 from menu import SCREEN_SIZE, GAME_WINDOW
-
-# GAME
-# set the walking speed to 30 frames per second (example: base char speed 2 is 60 px moving per second)
-# same with fighting
 from models import DataModel
 
 GAME_FPS = 60
@@ -133,72 +129,6 @@ class Map:
                 cell_rect,
                 1
             )
-
-
-class Inventory:
-    HEADER_TOP_POSITION = 10
-    HEADER_SIZE = 40
-    TEXT_TOP_POSITION = 200
-    LEFT_CONTAINER_TEXT_MARGIN = 200
-    RIGHT_CONTAINER_TEXT_MARGIN = 600
-    TEST_SIZE = 20
-    TEST_PADDING = TEST_SIZE + 10
-    TEST_COLOR = "black"
-    TEST_SECONDARY_COLOR = "darkgreen"
-
-    def __init__(self, sprite_group: MainCharGroup):
-        self.sprite_group = sprite_group
-        self.font_surface_header = self.set_font("Inventory", self.HEADER_SIZE)
-
-    def set_font(self, text: str = "Inventory", size: int = 16, color: str = "blue") -> pygame.Surface:
-        """Sets font and returns a text surface"""
-        font = pygame.font.SysFont("Arial", size)
-        text = text
-        return font.render(text, True, pygame.color.Color(color))
-
-    def draw_page(self) -> None:
-        """Draws the whole page"""
-        self.draw_page_name()
-        self.draw_items()
-        self.draw_current_item()
-
-    def draw_page_name(self) -> None:
-        """Draws the page name on top of the window"""
-        GAME_WINDOW.blit(
-            self.font_surface_header,
-            [
-                GAME_WINDOW.get_width() / 2 - self.font_surface_header.get_width() / 2,
-                self.HEADER_TOP_POSITION
-            ]
-        )
-
-    def draw_items(self) -> None:
-        """Draws Items of the main char"""
-        items = self.sprite_group.sprite.data.items
-        top_position = self.TEXT_TOP_POSITION
-
-        GAME_WINDOW.blit(self.set_font(
-            "Items:", self.TEST_SIZE, self.TEST_SECONDARY_COLOR), [self.LEFT_CONTAINER_TEXT_MARGIN, top_position])
-        top_position = top_position + self.TEST_PADDING
-        for item in items:
-            item_text_font_surface = self.set_font(item.name, self.TEST_SIZE, self.TEST_COLOR)
-            GAME_WINDOW.blit(item_text_font_surface, [200, top_position])
-            top_position = top_position + self.TEST_SIZE
-
-    def draw_current_item(self) -> None:
-        """Draws Current item of the main char"""
-        current_item = self.sprite_group.sprite.data.mainchar.current_item
-        top_position = self.TEXT_TOP_POSITION
-
-        GAME_WINDOW.blit(self.set_font(
-            "Current Item:",
-            self.TEST_SIZE,
-            self.TEST_SECONDARY_COLOR),
-            [self.RIGHT_CONTAINER_TEXT_MARGIN, top_position]
-        )
-        top_position = top_position + self.TEST_PADDING
-        GAME_WINDOW.blit(self.set_font(
-            current_item.name, self.TEST_SIZE, self.TEST_COLOR), [self.RIGHT_CONTAINER_TEXT_MARGIN, top_position])
 
 
 class MovementType(Enum):
@@ -363,10 +293,6 @@ def create_game_world() -> GameWorld:
 
 def create_map(game_world: GameWorld) -> Map:
     return Map(game_world)
-
-
-def create_inventory(sprite_group: MainCharGroup) -> Inventory:
-    return Inventory(sprite_group)
 
 
 def create_main_char() -> MainChar:
